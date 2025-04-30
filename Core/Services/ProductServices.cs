@@ -2,6 +2,8 @@
 using Domain.Contracts;
 using Domain.Entities;
 using Services.Abstractions;
+using Services.Specifications;
+using Shared;
 using Shared.Dtos;
 using System;
 using System.Collections.Generic;
@@ -13,16 +15,25 @@ namespace Services
 {
     public class ProductServices(IUnitOfWork _unitOfWork, IMapper mapper) : IProductServices
     {
-        public async Task<IEnumerable<ProductResultDto>> GetAllProductsAsync()
+        public async Task<PaginationResponse<ProductResultDto>> GetAllProductsAsync(ProductSpecficationParamters specParams)
         {
-            var products = await _unitOfWork.GetRepository<Product, int>().GetAllAsync();
+            var spec = new ProductWithBrandsAndTypesSpecifications(specParams);
+
+            var products = await _unitOfWork.GetRepository<Product, int>().GetAllAsync(spec);
+
+            var specCount = new ProductWithCountSpecifications(specParams);
+
+            var count = await _unitOfWork.GetRepository<Product, int>().ContAsync(specCount);
+
             var result = mapper.Map<IEnumerable<ProductResultDto>>(products);
-            return result;
+
+            return new PaginationResponse<ProductResultDto>(specParams.PageIndex,specParams.PageSize,count,result);
         }
        
         public async Task<ProductResultDto?> GetProductByIdAsync(int id)
         {
-            var product = await _unitOfWork.GetRepository<Product , int>().GetByIdAsync(id);
+            var spec = new ProductWithBrandsAndTypesSpecifications(id);
+            var product = await _unitOfWork.GetRepository<Product , int>().GetByIdAsync(spec);
             if (product == null)
             {
                 throw new Exception("Product not found");

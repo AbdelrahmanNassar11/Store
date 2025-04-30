@@ -13,7 +13,6 @@ namespace Persistencies.Repositories
     public class GenericRepository<TEntity , TKey> : IGenericRepository<TEntity, TKey> where TEntity : BaseEntity<TKey>
     {
         private readonly StoreDbContext _context;
-
         public GenericRepository(StoreDbContext context)
         {
             _context = context;
@@ -50,6 +49,25 @@ namespace Persistencies.Repositories
         public void Delete(TEntity entity)
         {
             _context.Remove(entity);
+        }
+
+        public async Task<IEnumerable<TEntity>> GetAllAsync(ISpecifications<TEntity, TKey> spec, bool trackChanges = false)
+        {
+             return await ApplySpecification(spec).ToListAsync();
+        }
+
+        public async Task<TEntity> GetByIdAsync(ISpecifications<TEntity, TKey> spec)
+        {
+            return await ApplySpecification(spec).FirstOrDefaultAsync();
+        }
+
+        public async Task<int> ContAsync(ISpecifications<TEntity, TKey> spec)
+        {
+            return await ApplySpecification(spec).CountAsync();
+        }
+        private IQueryable<TEntity> ApplySpecification(ISpecifications<TEntity, TKey> spec)
+        {
+            return SpecificationEvaluator.GetQuery<TEntity, TKey>(_context.Set<TEntity>(), spec);
         }
     }
 }

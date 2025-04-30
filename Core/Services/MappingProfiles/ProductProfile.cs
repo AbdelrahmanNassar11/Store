@@ -15,9 +15,12 @@ namespace Services.MappingProfiles
         {
             CreateMap<Product, ProductResultDto>()
                 .ForMember(P => P.BrandName, O => O.MapFrom(P => P.ProductBrand.Name))
-                .ForMember(p => p.TypeName , O => O.MapFrom(T => T.ProductType.Name));
-            CreateMap<ProductBrand, BrandResultDto>()
-                ;
+                .ForMember(p => p.TypeName, O => O.MapFrom(T => T.ProductType.Name))
+                .ForMember(p => p.PictureUrl, o => o.MapFrom<PictureResolver>());
+            
+            //.ForMember(p => p.PictureUrl, o => o.MapFrom(P => $"https://localhost:44377/{P.PictureUrl}"));
+
+            CreateMap<ProductBrand, BrandResultDto>();
             CreateMap<ProductType, TypeResultDto>();
         }
     }
