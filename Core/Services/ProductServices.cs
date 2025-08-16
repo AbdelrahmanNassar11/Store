@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using Domain.Contracts;
 using Domain.Entities;
+using Domain.Exceptions;
 using Services.Abstractions;
 using Services.Specifications;
 using Shared;
@@ -21,9 +22,9 @@ namespace Services
 
             var products = await _unitOfWork.GetRepository<Product, int>().GetAllAsync(spec);
 
-            var specCount = new ProductWithCountSpecifications(specParams);
+            var totalSpec = new ProductWithCountSpecifications(specParams);
 
-            var count = await _unitOfWork.GetRepository<Product, int>().ContAsync(specCount);
+            var count = await _unitOfWork.GetRepository<Product, int>().ContAsync(totalSpec);
 
             var result = mapper.Map<IEnumerable<ProductResultDto>>(products);
 
@@ -34,10 +35,9 @@ namespace Services
         {
             var spec = new ProductWithBrandsAndTypesSpecifications(id);
             var product = await _unitOfWork.GetRepository<Product , int>().GetByIdAsync(spec);
-            if (product == null)
-            {
-                throw new Exception("Product not found");
-            }
+
+            if (product == null) throw new ProductNotFoundException(id);
+
             var result = mapper.Map<ProductResultDto>(product);
             return result;
 

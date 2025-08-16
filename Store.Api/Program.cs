@@ -1,12 +1,17 @@
 
 using Domain.Contracts;
+using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Persistencies;
 using Persistencies.Data.DbContexts;
 using Services;
 using Services.Abstractions;
+using Shared.ErrorModels;
+using Store.Api.Extension;
+using Store.Api.Middlewares;
 using System.Threading.Tasks;
-using AssemblyMapping = Services.AssemblyReference;
+
 namespace Store.Api
 {
     public class Program
@@ -17,42 +22,12 @@ namespace Store.Api
 
             // Add services to the container.
 
-            builder.Services.AddControllers();
-            // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
-            builder.Services.AddEndpointsApiExplorer();
-            builder.Services.AddSwaggerGen();
+            builder.Services.RegisterAllServices(builder.Configuration);
 
-            builder.Services.AddDbContext<StoreDbContext>(Options =>
-            {
-                Options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
-            });
 
-            builder.Services.AddScoped<IDbInitializer, DbInitializer>();
-            builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
-            builder.Services.AddAutoMapper(typeof(AssemblyMapping).Assembly);
-            builder.Services.AddScoped<IServiceManager, ServiceManager>();
             var app = builder.Build();
 
-            #region Seeding
-            using var scope = app.Services.CreateScope();
-            var dbInitializer = scope.ServiceProvider.GetRequiredService<IDbInitializer>();
-            await dbInitializer.InitializeAsync();
-            #endregion
-
-            // Configure the HTTP request pipeline.
-            if (app.Environment.IsDevelopment())
-            {
-                app.UseSwagger();
-                app.UseSwaggerUI();
-            }
-            app.UseStaticFiles();
-
-            app.UseHttpsRedirection();
-
-            app.UseAuthorization();
-
-
-            app.MapControllers();
+            await app.ConfigureMiddlewares();
 
             app.Run();
         }
